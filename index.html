@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Practice Drill - Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo:wght@400;500;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f3f0e8; --ink-dim:#b0aaa0; --bg:#141312; --bg-panel:#1c1a18;
+    --accent:#d94b3f; --accent-soft:rgba(217,75,63,0.2); --gold:#c99a4a; --line:#3c3833;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; overflow-x:hidden; }
+  body{
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+    background-image:
+      radial-gradient(circle at 20% -10%, rgba(217,75,63,0.09), transparent 40%),
+      radial-gradient(circle at 100% 110%, rgba(201,154,74,0.07), transparent 45%);
+  }
+  .wrap{ min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 18px 40px; }
+  header{ width:100%; max-width:520px; text-align:center; margin-bottom:18px; }
+  .demo-badge{
+    display:inline-block; font-size:11px; letter-spacing:.2em; text-transform:uppercase; font-weight:700;
+    color:var(--gold); border:1px solid var(--gold); border-radius:999px; padding:5px 12px; margin-bottom:12px;
+  }
+  .title{ font-family:'Archivo Black',sans-serif; font-size:30px; letter-spacing:.01em; }
+  .drill-subtitle{ font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-dim); margin-top:6px; }
+
+  .section-label{ width:100%; max-width:520px; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-dim); margin:14px 0 8px; font-weight:600; }
+  .filters{ display:flex; flex-wrap:wrap; gap:8px; max-width:520px; width:100%; }
+
+  .lookup-box{ width:100%; max-width:520px; background:var(--bg-panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:6px; }
+  .lookup-row{ display:flex; gap:8px; }
+  .lookup-row input{ flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:11px 12px; font-family:inherit; font-size:16px; color:var(--ink); }
+  .lookup-row input::placeholder{ color:var(--ink-dim); }
+  .lookup-row input:focus{ outline:none; border-color:var(--gold); }
+  .lookup-row button{ flex-shrink:0; border:none; border-radius:8px; padding:0 18px; background:var(--gold); color:#1c1a18; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
+  .lookup-row button:active{ transform:scale(.97); }
+  .lookup-hint{ font-size:12px; color:var(--ink-dim); margin-top:8px; line-height:1.4; }
+
+  .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); align-items:center; justify-content:center; padding:24px; z-index:100; }
+  .modal-backdrop.open{ display:flex; }
+  .modal-card{ background:var(--bg-panel); border:1px solid var(--line); border-radius:16px; padding:26px 24px; max-width:440px; width:100%; max-height:78vh; overflow-y:auto; }
+  .modal-title{ font-family:'Archivo Black',sans-serif; font-size:26px; color:var(--gold); margin-bottom:16px; }
+  .modal-combo-item{ margin-bottom:18px; }
+  .modal-combo-item:last-child{ margin-bottom:0; }
+  .modal-combo-key{ font-family:'Archivo Black',sans-serif; font-size:16px; color:var(--gold); margin-bottom:3px; }
+  .modal-combo-text{ font-size:16px; line-height:1.5; }
+  .modal-combo-follow{ font-size:14px; font-style:italic; color:var(--gold); margin-top:3px; }
+  .modal-error{ font-size:15px; color:var(--accent); line-height:1.5; }
+
+  .remaining{ width:100%; max-width:520px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; font-weight:600; color:var(--ink-dim); letter-spacing:.04em; margin-bottom:4px; }
+  .remaining strong{ color:var(--ink); font-weight:700; }
+  .remaining-bar{ width:100%; max-width:520px; height:5px; border-radius:999px; background:var(--line); overflow:hidden; margin-bottom:22px; }
+  .remaining-fill{ height:100%; background:var(--accent); transition:width .3s ease; width:100%; }
+
+  .chip{ border:1px solid var(--line); background:var(--bg-panel); color:var(--ink-dim); font-size:14px; font-weight:600; padding:9px 16px; border-radius:999px; cursor:pointer; transition:all .15s ease; user-select:none; }
+  .chip.active{ border-color:var(--accent); color:var(--ink); background:var(--accent-soft); }
+  .chip.util{ color:var(--gold); border-color:var(--gold); background:rgba(201,154,74,.1); }
+  .chip.voice-on{ color:var(--ink); border-color:var(--gold); background:rgba(201,154,74,.18); }
+  .chip:active{ transform:scale(.96); }
+
+  main{ width:100%; max-width:520px; margin-top:22px; display:flex; flex-direction:column; align-items:center; }
+  .stage{ position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center; margin-bottom:26px; }
+  svg.ring{ position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); }
+  svg.ring circle{ fill:none; stroke-width:6; }
+  .ring-track{ stroke:var(--line); }
+  .ring-progress{ stroke:var(--accent); stroke-linecap:round; transition:stroke .3s ease; }
+  .ring-progress.reveal-state{ stroke:var(--gold); }
+  .center{ position:relative; text-align:center; padding:0 18px; }
+  .number{ font-family:'Archivo Black',sans-serif; font-size:76px; line-height:1; letter-spacing:-.01em; }
+  .count{ font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--ink-dim); letter-spacing:.08em; margin-top:6px; }
+  .status{ font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:8px; }
+  .status.reveal{ color:var(--gold); }
+
+  .card{ width:100%; background:var(--bg-panel); border:1px solid var(--line); border-radius:14px; padding:26px 24px; min-height:140px; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .card.hidden-text{ color:var(--ink-dim); font-size:17px; letter-spacing:.02em; }
+  .card.revealed{ text-align:left; align-items:flex-start; flex-direction:column; gap:8px; }
+  .combo-line{ font-size:22px; line-height:1.5; font-weight:500; }
+  .combo-followup{ font-size:18px; color:var(--gold); font-style:italic; }
+
+  .controls{ display:flex; gap:12px; margin-top:24px; width:100%; }
+  button.action{ flex:1; border:none; border-radius:10px; padding:15px 0; font-family:inherit; font-weight:700; font-size:16px; letter-spacing:.02em; cursor:pointer; transition:transform .1s ease; }
+  button.action:active{ transform:scale(.97); }
+  .btn-primary{ background:var(--accent); color:#fff; }
+  .btn-secondary{ background:transparent; border:1px solid var(--line); color:var(--ink-dim); }
+
+  footer{ margin-top:24px; font-size:12px; color:var(--ink-dim); text-align:center; max-width:420px; line-height:1.6; }
+  .footer-line{ margin-bottom:8px; }
+  .footer-line:last-child{ margin-bottom:0; }
+
+  @keyframes pop{ 0%{transform:scale(.82);opacity:0} 60%{transform:scale(1.06);opacity:1} 100%{transform:scale(1);opacity:1} }
+  .number.pop-in{ animation:pop .4s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes fade{ 0%{opacity:0;transform:translateY(-4px)} 100%{opacity:1;transform:translateY(0)} }
+  .status.fade-in{ animation:fade .28s ease both; }
+  @keyframes enter{ 0%{opacity:0;transform:translateY(12px)} 100%{opacity:1;transform:translateY(0)} }
+  .card.enter{ animation:enter .35s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+  .number.urgent{ animation:pulse .6s ease-in-out infinite; color:var(--accent); }
+  .ring-progress.urgent{ filter:drop-shadow(0 0 5px rgba(217,75,63,.55)); }
+  @keyframes done{ 0%{transform:scale(.5) rotate(-8deg);opacity:0} 60%{transform:scale(1.18) rotate(4deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:1} }
+  .number.complete-pop{ animation:done .5s cubic-bezier(.34,1.56,.64,1) both; }
+
+  @media (prefers-reduced-motion: reduce){
+    .number.pop-in,.status.fade-in,.card.enter,.number.urgent,.number.complete-pop{ animation:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="demo-badge">Demo</div>
+    <div class="title">Your School Name</div>
+    <div class="drill-subtitle">Practice Review and Drill</div>
+  </header>
+
+  <div class="lookup-box">
+    <div class="lookup-row">
+      <input type="text" id="lookupInput" placeholder="e.g. “2A” or “2”" />
+      <button id="lookupBtn">Search</button>
+    </div>
+    <div class="lookup-hint">Search here. Enter an item like "2A" for a specific one, or just the set number like "2" to review the whole set.</div>
+  </div>
+
+  <div class="section-label">Sets to review</div>
+  <div class="filters" id="filters"></div>
+
+  <div class="section-label">Seconds to perform</div>
+  <div class="filters" id="timerFilters"></div>
+
+  <div class="section-label">Voice (Hands Free)</div>
+  <div class="filters" id="voiceFilters"></div>
+
+  <main>
+    <div class="remaining"><strong id="remainingCount">—</strong>&nbsp;items left this round</div>
+    <div class="remaining-bar"><div class="remaining-fill" id="remainingFill"></div></div>
+
+    <div class="stage">
+      <svg class="ring" viewBox="0 0 280 280">
+        <circle class="ring-track" cx="140" cy="140" r="126"></circle>
+        <circle class="ring-progress" id="ringProgress" cx="140" cy="140" r="126"></circle>
+      </svg>
+      <div class="center">
+        <div class="status" id="statusLabel">Get Ready</div>
+        <div class="number" id="comboNumber">—</div>
+        <div class="count" id="countLabel">start when ready</div>
+      </div>
+    </div>
+
+    <div class="card hidden-text" id="answerCard">The item number shows here. Recall it, then the answer reveals.</div>
+
+    <div class="controls">
+      <button class="action btn-secondary" id="skipBtn">Skip</button>
+      <button class="action btn-primary" id="startBtn">Start Drill</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-line">This is a demo with placeholder content. Your school's branding and syllabus (combinations, kata steps, terminology, anything you like) would replace it.</div>
+    <div class="footer-line">"Sets to review" controls which items appear in the random drill. "Voice" runs it hands-free, announcing each item and reading the answer aloud after your chosen time.</div>
+  </footer>
+</div>
+
+<div class="modal-backdrop" id="lookupBackdrop">
+  <div class="modal-card">
+    <div class="modal-title" id="modalTitle">—</div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// Placeholder content only. Replace with the school's own syllabus.
+const COMBOS = {
+  "1A": { text: "Sample step one, sample step two, sample step three.", follow: "Sample follow-up." },
+  "1B": { text: "Sample step one, sample step two.", follow: "Sample follow-up." },
+  "1C": { text: "Sample step one, sample step two, sample step three, sample step four.", follow: "" },
+  "1D": { text: "Sample step one, sample step two, sample step three.", follow: "Sample follow-up twice." },
+  "2A": { text: "Sample term or technique description goes here.", follow: "Sample note." },
+  "2B": { text: "Sample step one, sample step two.", follow: "Sample follow-up." },
+  "2C": { text: "Sample step one, sample step two, sample step three.", follow: "" },
+  "2D": { text: "Sample step one, sample step two, sample step three, sample step four.", follow: "Sample follow-up." },
+  "3A": { text: "Sample step one, sample step two.", follow: "Sample follow-up." },
+  "3B": { text: "Sample definition or answer text goes here.", follow: "" },
+  "3C": { text: "Sample step one, sample step two, sample step three.", follow: "Sample follow-up." },
+  "3D": { text: "Sample step one, sample step two.", follow: "Sample follow-up." },
+  "4A": { text: "Sample step one, sample step two, sample step three.", follow: "Sample follow-up." },
+  "4B": { text: "Sample step one, sample step two.", follow: "" },
+  "4C": { text: "Sample step one, sample step two, sample step three, sample step four.", follow: "Sample follow-up." },
+  "4D": { text: "Sample step one, sample step two.", follow: "Sample follow-up." }
+};
+
+const SETS = ["1","2","3","4"];
+const TIMER_OPTIONS = [5, 10, 15, 20];
+let selected = new Set(SETS);
+let duration = 10;
+let voiceOn = false;
+
+const $ = id => document.getElementById(id);
+const filtersEl=$('filters'), timerFiltersEl=$('timerFilters'), voiceFiltersEl=$('voiceFilters');
+const comboNumberEl=$('comboNumber'), countLabelEl=$('countLabel'), statusLabelEl=$('statusLabel');
+const answerCardEl=$('answerCard'), ringProgressEl=$('ringProgress');
+const startBtn=$('startBtn'), skipBtn=$('skipBtn');
+const remainingCountEl=$('remainingCount'), remainingFillEl=$('remainingFill');
+const lookupInputEl=$('lookupInput'), lookupBtnEl=$('lookupBtn'), lookupBackdropEl=$('lookupBackdrop');
+const modalTitleEl=$('modalTitle'), modalBodyEl=$('modalBody');
+
+const RADIUS=126, CIRCUMFERENCE=2*Math.PI*RADIUS;
+ringProgressEl.style.strokeDasharray = CIRCUMFERENCE;
+ringProgressEl.style.strokeDashoffset = 0;
+
+// ---- Screen wake lock (keeps the phone awake during a hands-free drill) ----
+let wakeLock = null;
+async function requestWakeLock(){
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) { wakeLock = null; }
+}
+function releaseWakeLock(){
+  if (wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && phase !== 'idle') requestWakeLock();
+});
+
+// ---- Speech ----
+const speechSupported = 'speechSynthesis' in window;
+let speechToken = 0;
+let preferredVoice = null;
+if (speechSupported){
+  const pickVoice = () => {
+    const voices = window.speechSynthesis.getVoices();
+    const en = voices.filter(v => v.lang && v.lang.startsWith('en'));
+    const isQuality = v => /natural|enhanced|premium|neural/i.test(v.name);
+    preferredVoice = en.find(v => isQuality(v) && v.localService) || en.find(isQuality) ||
+      en.find(v => v.localService) || en[0] || voices[0] || null;
+  };
+  pickVoice();
+  window.speechSynthesis.onvoiceschanged = pickVoice;
+}
+function cancelSpeech(){ speechToken++; if (speechSupported) window.speechSynthesis.cancel(); }
+function speakSequence(parts, onDone){
+  if (!voiceOn || !speechSupported){ onDone(); return; }
+  const token = ++speechToken;
+  let done = false;
+  const finish = () => { if (done || token !== speechToken) return; done = true; onDone(); };
+  const safety = setTimeout(finish, 9000);
+  const u = new SpeechSynthesisUtterance(parts.join(' '));
+  u.rate = 0.95; u.pitch = 1;
+  if (preferredVoice) u.voice = preferredVoice;
+  u.onend = () => { clearTimeout(safety); finish(); };
+  u.onerror = () => { clearTimeout(safety); finish(); };
+  window.speechSynthesis.speak(u);
+}
+
+// ---- Filters ----
+function renderFilters(){
+  filtersEl.innerHTML = '';
+  SETS.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (selected.has(s) ? ' active' : '');
+    chip.textContent = 'Set ' + s;
+    chip.addEventListener('click', () => {
+      selected.has(s) ? selected.delete(s) : selected.add(s);
+      renderFilters(); rebuildPool(); if (phase === 'idle') resetIdleDisplay();
+    });
+    filtersEl.appendChild(chip);
+  });
+  const all = document.createElement('div');
+  all.className = 'chip util'; all.textContent = 'All';
+  all.addEventListener('click', () => { SETS.forEach(s => selected.add(s)); renderFilters(); rebuildPool(); if (phase==='idle') resetIdleDisplay(); });
+  filtersEl.appendChild(all);
+  const clear = document.createElement('div');
+  clear.className = 'chip util'; clear.textContent = 'Clear';
+  clear.addEventListener('click', () => { selected.clear(); renderFilters(); rebuildPool(); if (phase==='idle') resetIdleDisplay(); });
+  filtersEl.appendChild(clear);
+}
+function renderTimerFilters(){
+  timerFiltersEl.innerHTML = '';
+  TIMER_OPTIONS.forEach(t => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (t === duration ? ' active' : '');
+    chip.textContent = t + 's';
+    chip.addEventListener('click', () => { duration = t; renderTimerFilters(); });
+    timerFiltersEl.appendChild(chip);
+  });
+}
+function renderVoiceFilters(){
+  voiceFiltersEl.innerHTML = '';
+  const chip = document.createElement('div');
+  chip.className = 'chip' + (voiceOn ? ' voice-on' : '');
+  chip.textContent = voiceOn ? '🔊 Voice On' : '🔇 Voice Off';
+  chip.addEventListener('click', () => { voiceOn = !voiceOn; if (!voiceOn) cancelSpeech(); renderVoiceFilters(); });
+  voiceFiltersEl.appendChild(chip);
+  if (!speechSupported){
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:var(--ink-dim);align-self:center;';
+    note.textContent = 'Speech not supported on this browser.';
+    voiceFiltersEl.appendChild(note);
+  }
+}
+
+// ---- Drill engine ----
+let pool = [], roundTotal = 0, currentKey = null, phase = 'idle', remaining = 10;
+const REVEAL_DURATION = 4, URGENCY_THRESHOLD = 3;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function animateIn(el, cls){
+  if (prefersReducedMotion) return;
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+}
+const setOf = key => key.slice(0, -1);
+function shuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function rebuildPool(){
+  pool = shuffle(Object.keys(COMBOS).filter(k => selected.has(setOf(k))));
+  roundTotal = pool.length; updateRemainingDisplay();
+}
+function updateRemainingDisplay(){
+  remainingCountEl.textContent = pool.length;
+  remainingFillEl.style.width = (roundTotal ? pool.length / roundTotal * 100 : 0) + '%';
+}
+function nextCombo(){ if (!pool.length) return null; currentKey = pool.pop(); updateRemainingDisplay(); return currentKey; }
+function updateRing(frac, revealState){
+  ringProgressEl.style.strokeDashoffset = CIRCUMFERENCE * (1 - frac);
+  ringProgressEl.classList.toggle('reveal-state', revealState);
+}
+function setUrgent(on){ comboNumberEl.classList.toggle('urgent', on); ringProgressEl.classList.toggle('urgent', on); }
+
+let countdownFrame = null, countdownToken = 0;
+function stopCountdownAnimation(){ countdownToken++; if (countdownFrame){ cancelAnimationFrame(countdownFrame); countdownFrame = null; } }
+function runCountdown(sec, onTick, onDone){
+  stopCountdownAnimation();
+  const token = ++countdownToken;
+  if (prefersReducedMotion){
+    let left = sec; onTick(1, left);
+    const iv = setInterval(() => {
+      if (token !== countdownToken){ clearInterval(iv); return; }
+      left -= 1; const c = Math.max(left, 0); onTick(c / sec, c);
+      if (left <= 0){ clearInterval(iv); onDone(); }
+    }, 1000);
+    return;
+  }
+  const totalMs = sec * 1000, start = performance.now();
+  function frame(now){
+    if (token !== countdownToken) return;
+    const remMs = Math.max(0, totalMs - (now - start));
+    onTick(remMs / totalMs, Math.ceil(remMs / 1000));
+    if (remMs <= 0){ onDone(); return; }
+    countdownFrame = requestAnimationFrame(frame);
+  }
+  countdownFrame = requestAnimationFrame(frame);
+}
+
+function startCall(){
+  stopCountdownAnimation(); cancelSpeech();
+  const key = nextCombo();
+  if (key === null){ finishRound(); return; }
+  phase = 'calling';
+  const announcing = voiceOn && speechSupported;
+  comboNumberEl.textContent = key; animateIn(comboNumberEl, 'pop-in');
+  statusLabelEl.textContent = announcing ? 'Calling…' : 'Perform It';
+  statusLabelEl.classList.remove('reveal'); animateIn(statusLabelEl, 'fade-in');
+  countLabelEl.textContent = announcing ? 'listen…' : (duration + 's');
+  answerCardEl.className = 'card hidden-text';
+  answerCardEl.textContent = 'Recall it. The answer reveals after the timer.';
+  setUrgent(false); updateRing(1, false);
+  speakSequence([key], () => { if (phase === 'calling') beginPerformCountdown(); });
+}
+function finishRound(){
+  stopCountdownAnimation(); cancelSpeech(); releaseWakeLock();
+  phase = 'idle'; setUrgent(false);
+  comboNumberEl.textContent = '✓'; animateIn(comboNumberEl, 'complete-pop');
+  statusLabelEl.textContent = 'Round Complete'; statusLabelEl.classList.add('reveal'); animateIn(statusLabelEl, 'fade-in');
+  countLabelEl.textContent = 'tap Start to go again';
+  answerCardEl.className = 'card hidden-text';
+  answerCardEl.textContent = "You've been through every item in this selection. Tap Start Drill to shuffle and go again.";
+  updateRing(0, false); startBtn.textContent = 'Start Drill';
+}
+function beginPerformCountdown(){
+  statusLabelEl.textContent = 'Perform It'; animateIn(statusLabelEl, 'fade-in');
+  countLabelEl.textContent = duration + 's'; updateRing(1, false);
+  runCountdown(duration, (frac, s) => {
+    countLabelEl.textContent = s + 's'; updateRing(frac, false);
+    setUrgent(s > 0 && s <= URGENCY_THRESHOLD);
+  }, () => { setUrgent(false); reveal(); });
+}
+function reveal(){
+  stopCountdownAnimation(); cancelSpeech();
+  phase = 'revealed';
+  const announcing = voiceOn && speechSupported;
+  statusLabelEl.textContent = announcing ? 'Reading…' : 'Answer';
+  statusLabelEl.classList.add('reveal'); animateIn(statusLabelEl, 'fade-in');
+  countLabelEl.textContent = announcing ? 'reading…' : ('next in ' + REVEAL_DURATION + 's');
+  const c = COMBOS[currentKey];
+  answerCardEl.className = 'card revealed';
+  answerCardEl.innerHTML = '<div class="combo-line">' + c.text + '</div>' +
+    (c.follow ? '<div class="combo-followup">' + c.follow + '</div>' : '');
+  animateIn(answerCardEl, 'enter'); updateRing(1, true);
+  speakSequence(c.follow ? [c.text, c.follow] : [c.text], () => { if (phase === 'revealed') beginRevealCountdown(); });
+}
+function beginRevealCountdown(){
+  statusLabelEl.textContent = 'Answer';
+  countLabelEl.textContent = 'next in ' + REVEAL_DURATION + 's'; updateRing(1, true);
+  runCountdown(REVEAL_DURATION, (frac, s) => {
+    countLabelEl.textContent = 'next in ' + s + 's'; updateRing(frac, true);
+  }, () => startCall());
+}
+function resetIdleDisplay(){
+  comboNumberEl.textContent = '—'; statusLabelEl.textContent = 'Get Ready'; statusLabelEl.classList.remove('reveal');
+  countLabelEl.textContent = 'start when ready';
+  answerCardEl.className = 'card hidden-text';
+  answerCardEl.textContent = 'The item number shows here. Recall it, then the answer reveals.';
+  setUrgent(false); updateRing(0, false);
+}
+function showNoSetsWarning(){
+  comboNumberEl.textContent = '!'; statusLabelEl.textContent = 'No Sets Selected'; statusLabelEl.classList.remove('reveal');
+  countLabelEl.textContent = 'pick at least one set';
+  answerCardEl.className = 'card hidden-text';
+  answerCardEl.textContent = 'Tap one or more "Set" chips above to choose what to drill, then press Start Drill again.';
+  updateRing(0, false);
+}
+function stopDrill(){
+  stopCountdownAnimation(); cancelSpeech(); releaseWakeLock();
+  phase = 'idle'; setUrgent(false); resetIdleDisplay(); startBtn.textContent = 'Start Drill';
+}
+startBtn.addEventListener('click', () => {
+  if (phase === 'idle'){
+    if (selected.size === 0){ showNoSetsWarning(); return; }
+    rebuildPool(); startBtn.textContent = 'Restart'; requestWakeLock(); startCall();
+  } else stopDrill();
+});
+skipBtn.addEventListener('click', () => {
+  if (phase === 'idle') return;
+  stopCountdownAnimation(); cancelSpeech();
+  if (phase === 'calling'){ setUrgent(false); reveal(); } else startCall();
+});
+
+// ---- Lookup ----
+function closeLookupModal(){ lookupBackdropEl.classList.remove('open'); lookupInputEl.value = ''; }
+function itemHtml(key, c, showKey){
+  return '<div class="modal-combo-item">' + (showKey ? '<div class="modal-combo-key">' + key + '</div>' : '') +
+    '<div class="modal-combo-text">' + c.text + '</div>' +
+    (c.follow ? '<div class="modal-combo-follow">' + c.follow + '</div>' : '') + '</div>';
+}
+function performLookup(){
+  const raw = lookupInputEl.value.trim().toUpperCase();
+  if (!raw) return;
+  const comboMatch = raw.match(/^(\d{1,2})([A-D])$/);
+  const setMatch = raw.match(/^(\d{1,2})$/);
+  if (comboMatch && COMBOS[raw]){
+    modalTitleEl.textContent = raw; modalBodyEl.innerHTML = itemHtml(raw, COMBOS[raw], false);
+  } else if (setMatch && SETS.includes(setMatch[1])){
+    modalTitleEl.textContent = 'Set ' + setMatch[1];
+    modalBodyEl.innerHTML = ['A','B','C','D'].map(l => COMBOS[setMatch[1]+l] ? itemHtml(setMatch[1]+l, COMBOS[setMatch[1]+l], true) : '').join('');
+  } else {
+    modalTitleEl.textContent = 'Not Found';
+    const safe = raw.replace(/[<>&"]/g, '');
+    modalBodyEl.innerHTML = '<div class="modal-error">Couldn\'t find "' + safe + '". Try a specific item like "2A", or just a set number like "2" to see the whole set.</div>';
+  }
+  lookupBackdropEl.classList.add('open');
+}
+lookupBtnEl.addEventListener('click', performLookup);
+lookupInputEl.addEventListener('keydown', e => { if (e.key === 'Enter') performLookup(); });
+lookupBackdropEl.addEventListener('click', e => { if (e.target === lookupBackdropEl) closeLookupModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && lookupBackdropEl.classList.contains('open')) closeLookupModal(); });
+
+renderFilters(); renderTimerFilters(); renderVoiceFilters(); rebuildPool();
+</script>
+</body>
+</html>
